@@ -15,7 +15,7 @@ var logger = loggo.GetLogger("")
 var logLevelEnv = os.Getenv("LOG_LEVEL")
 var logLevel = loggo.INFO
 
-func timeoutRequest(w http.ResponseWriter, r *http.Request) {
+func sleepRequest(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var seconds int
 	vars := mux.Vars(r)
@@ -58,7 +58,7 @@ func main() {
 
 	logger.Debugf("Service starting ...")
 	var r = mux.NewRouter()
-	r.HandleFunc("/timeout/{seconds}", timeoutRequest).Methods("GET")
+	r.HandleFunc("/sleep/{seconds}", sleepRequest).Methods("GET")
 	r.HandleFunc("/health", healthRequest).Methods("GET")
 
 	port := serverPort
