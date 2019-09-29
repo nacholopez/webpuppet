@@ -5,5 +5,7 @@ RUN go get webpuppet
 RUN go install webpuppet
 
 FROM ubuntu:bionic
+RUN adduser --system --quiet --group webpuppet
 COPY --from=0 /go/bin/webpuppet /
+USER webpuppet
 CMD ["/webpuppet"]
