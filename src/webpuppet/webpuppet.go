@@ -28,7 +28,8 @@ func sleepRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	time.Sleep(time.Duration(seconds) * time.Second)
-	fmt.Fprintf(w, "Slept for %d seconds", seconds)
+	w.Header().Add("Content-Type", "application/json")
+	fmt.Fprintf(w, "{ \"msg\": \"Slept for %d seconds\" }\n", seconds)
 }
 
 func healthRequest(w http.ResponseWriter, r *http.Request) {
