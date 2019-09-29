@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -57,7 +60,9 @@ func main() {
 		}
 	}
 
-	logger.Debugf("Service starting ...")
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	var r = mux.NewRouter()
 	r.HandleFunc("/sleep/{seconds}", sleepRequest).Methods("GET")
 	r.HandleFunc("/health", healthRequest).Methods("GET")
@@ -69,6 +74,20 @@ func main() {
 		ReadTimeout: 10 * time.Second,
 	}
 
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
 	logger.Infof("Service ready. Listening on port %d", port)
-	logger.Criticalf(srv.ListenAndServe().Error())
+
+	<-done
+	logger.Infof("Stopping service ...")
+
+	ctx, _ := context.WithTimeout(context.Background(), 60*time.Second)
+
+	if err := srv.Shutdown(ctx); err != nil {
+		logger.Warningf("Stopping service failed: %+v", err)
+	}
+	logger.Infof("Service stopped.")
 }
