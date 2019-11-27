@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -39,6 +40,26 @@ func healthRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "OK")
 }
 
+func printToStderr(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorf("error parsing body")
+		http.Error(w, "error parsing body", http.StatusInternalServerError)
+		return
+	}
+	os.Stderr.WriteString(string(body) + "\n")
+}
+
+func printToStdout(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorf("error parsing body")
+		http.Error(w, "error parsing body", http.StatusInternalServerError)
+		return
+	}
+	os.Stdout.WriteString(string(body) + "\n")
+}
+
 func main() {
 	var err error
 	var valid bool
@@ -66,6 +87,8 @@ func main() {
 	var r = mux.NewRouter()
 	r.HandleFunc("/sleep/{seconds}", sleepRequest).Methods("GET")
 	r.HandleFunc("/health", healthRequest).Methods("GET")
+	r.HandleFunc("/print/stderr", printToStderr).Methods("POST")
+	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
 
 	port := serverPort
 	srv := &http.Server{
