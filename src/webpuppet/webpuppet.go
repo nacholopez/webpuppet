@@ -64,6 +64,7 @@ func main() {
 	var err error
 	var valid bool
 	var serverPortEnv = os.Getenv("PORT")
+	var bootWaitEnv = os.Getenv("BOOT_WAIT_SECS")
 	var serverPort = 8080
 
 	if len(logLevelEnv) > 0 {
@@ -79,6 +80,15 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if len(bootWaitEnv) > 0 {
+		bootWait, err := strconv.Atoi(bootWaitEnv)
+		if err != nil {
+			panic(err)
+		}
+		logger.Infof("Boot waiting for %d secs", bootWait)
+		time.Sleep(time.Duration(bootWait) * time.Second)
 	}
 
 	done := make(chan os.Signal, 1)
