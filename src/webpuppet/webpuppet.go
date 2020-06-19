@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -60,6 +61,24 @@ func printToStdout(w http.ResponseWriter, r *http.Request) {
 	os.Stdout.WriteString(string(body) + "\n")
 }
 
+func mirror(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logger.Errorf("error parsing body")
+		http.Error(w, "error parsing body", http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "HEADERS\n")
+	fmt.Fprintf(w, "=======\n")
+	for k, v := range r.Header {
+		fmt.Fprintf(w, "%s: %s\n", k, strings.Join(v, ", "))
+	}
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "BODY\n")
+	fmt.Fprintf(w, "====\n")
+	fmt.Fprintf(w, string(body)+"\n")
+}
+
 func main() {
 	var err error
 	var valid bool
@@ -99,6 +118,7 @@ func main() {
 	r.HandleFunc("/health", healthRequest).Methods("GET")
 	r.HandleFunc("/print/stderr", printToStderr).Methods("POST")
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
+	r.HandleFunc("/mirror", mirror).Methods("POST")
 
 	port := serverPort
 	srv := &http.Server{
