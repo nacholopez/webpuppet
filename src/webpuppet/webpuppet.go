@@ -81,6 +81,23 @@ func mirror(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func httpResponseCode(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var code int
+	vars := mux.Vars(r)
+	code, err = strconv.Atoi(vars["code"])
+
+	w.Header().Add("Content-Type", "application/json")
+
+	if err != nil || code < 100 || code > 599 {
+		logger.Debugf("Invalid code")
+		http.Error(w, "{ \"error\": \"invalid code\" }", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(code)
+	fmt.Fprintf(w, "{ \"code\": \"%d\" }\n", code)
+}
+
 func main() {
 	var err error
 	var valid bool
@@ -121,6 +138,7 @@ func main() {
 	r.HandleFunc("/print/stderr", printToStderr).Methods("POST")
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
 	r.HandleFunc("/mirror", mirror).Methods("GET", "POST")
+	r.HandleFunc("/httpResponseCode/{code}", httpResponseCode).Methods("GET", "POST")
 
 	port := serverPort
 	srv := &http.Server{
