@@ -73,10 +73,12 @@ func mirror(w http.ResponseWriter, r *http.Request) {
 	for k, v := range r.Header {
 		fmt.Fprintf(w, "%s: %s\n", k, strings.Join(v, ", "))
 	}
-	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "BODY\n")
-	fmt.Fprintf(w, "====\n")
-	fmt.Fprintf(w, string(body)+"\n")
+	if len(string(body)) > 0 {
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "BODY\n")
+		fmt.Fprintf(w, "====\n")
+		fmt.Fprintf(w, string(body)+"\n")
+	}
 }
 
 func main() {
@@ -118,7 +120,7 @@ func main() {
 	r.HandleFunc("/health", healthRequest).Methods("GET")
 	r.HandleFunc("/print/stderr", printToStderr).Methods("POST")
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
-	r.HandleFunc("/mirror", mirror).Methods("POST")
+	r.HandleFunc("/mirror", mirror).Methods("GET", "POST")
 
 	port := serverPort
 	srv := &http.Server{
