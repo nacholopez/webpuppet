@@ -23,8 +23,10 @@ var logLevel = loggo.INFO
 func sleepRequest(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var seconds int
+	var traceID string
 	vars := mux.Vars(r)
 	seconds, err = strconv.Atoi(vars["seconds"])
+	traceID = r.Header.Get("TraceID")
 
 	if err != nil {
 		logger.Debugf("Failure reading timeout seconds")
@@ -32,9 +34,11 @@ func sleepRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Debugf("[%s] Sleeping for %d", traceID, seconds)
 	time.Sleep(time.Duration(seconds) * time.Second)
 	w.Header().Add("Content-Type", "application/json")
 	fmt.Fprintf(w, "{ \"msg\": \"Slept for %d seconds\" }\n", seconds)
+	logger.Debugf("[%s] Slept for %d", traceID, seconds)
 }
 
 func healthRequest(w http.ResponseWriter, r *http.Request) {
