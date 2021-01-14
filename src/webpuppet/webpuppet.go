@@ -137,7 +137,7 @@ func main() {
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	var r = mux.NewRouter()
-	r.HandleFunc("/sleep/{seconds}", sleepRequest).Methods("GET")
+	r.HandleFunc("/sleep/{seconds}", sleepRequest).Methods("GET", "POST")
 	r.HandleFunc("/health", healthRequest).Methods("GET")
 	r.HandleFunc("/print/stderr", printToStderr).Methods("POST")
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
