@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,6 +20,59 @@ import (
 var logger = loggo.GetLogger("")
 var logLevelEnv = os.Getenv("LOG_LEVEL")
 var logLevel = loggo.INFO
+
+func initRandom() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+// RandStringRunes RandStringRunes
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func sleepMsMessageLength(w http.ResponseWriter, r *http.Request) {
+	var maxMs, minMs, messageLength int
+	var randomSleepMs int
+	var randomMessage string
+
+	vars := mux.Vars(r)
+
+	maxMs, _ = strconv.Atoi(vars["maxms"])
+	minMs, _ = strconv.Atoi(vars["minms"])
+	messageLength, _ = strconv.Atoi(vars["messageLength"])
+
+	if maxMs > 0 && minMs > 0 && minMs <= maxMs {
+		diff := maxMs - minMs
+		if diff > 0 {
+			randomSleepMs = rand.Intn(diff) + minMs
+		} else {
+			randomSleepMs = minMs
+		}
+	} else {
+		logger.Debugf("Failure reading timeout ms values")
+		http.Error(w, "Invalid input", http.StatusInternalServerError)
+		return
+	}
+
+	randomMessage = RandStringRunes(messageLength)
+
+	logger.Debugf("Sleeping for %d ms", randomSleepMs)
+	time.Sleep(time.Duration(randomSleepMs) * time.Millisecond)
+	w.Header().Add("Content-Type", "application/json")
+	if messageLength > 0 {
+		logger.Debugf("Replying with a random message length of %d", messageLength)
+		fmt.Fprintf(w, "{ \"msg\": \"%s\" }\n", randomMessage)
+	} else {
+		fmt.Fprintf(w, "{ \"msg\": \"Slept for %d milliseconds\" }\n", randomSleepMs)
+	}
+	logger.Debugf("Slept for %d ms", randomSleepMs)
+}
 
 func sleepRequest(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -143,6 +197,7 @@ func main() {
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
 	r.HandleFunc("/mirror", mirror).Methods("GET", "POST")
 	r.HandleFunc("/httpResponseCode/{code}", httpResponseCode).Methods("GET", "POST")
+	r.HandleFunc("/sleepms/max/{maxms}/min/{minms}/messageLength/{messageLength}", sleepMsMessageLength).Methods("GET", "POST")
 
 	port := serverPort
 	srv := &http.Server{
