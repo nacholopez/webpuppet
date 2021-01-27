@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -36,37 +37,54 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
+// RandInteger RandInteger
+func RandInteger(min int, max int) (int, error) {
+	var random int
+	if max > 0 && min > 0 && min <= max {
+		diff := max - min
+		if diff > 0 {
+			random = rand.Intn(diff) + min
+		} else {
+			random = min
+		}
+		return random, nil
+	}
+	return -1, errors.New("invalid range")
+}
+
 func sleepMsMessageLength(w http.ResponseWriter, r *http.Request) {
-	var maxMs, minMs, messageLength int
-	var randomSleepMs int
+	var err error
+	var maxMs, minMs, maxML, minML int
+	var randomSleepMs, randomMessageLength int
 	var randomMessage string
 
 	vars := mux.Vars(r)
 
 	maxMs, _ = strconv.Atoi(vars["maxms"])
 	minMs, _ = strconv.Atoi(vars["minms"])
-	messageLength, _ = strconv.Atoi(vars["messageLength"])
+	maxML, _ = strconv.Atoi(vars["maxML"])
+	minML, _ = strconv.Atoi(vars["minML"])
 
-	if maxMs > 0 && minMs > 0 && minMs <= maxMs {
-		diff := maxMs - minMs
-		if diff > 0 {
-			randomSleepMs = rand.Intn(diff) + minMs
-		} else {
-			randomSleepMs = minMs
-		}
-	} else {
-		logger.Debugf("Failure reading timeout ms values")
-		http.Error(w, "Invalid input", http.StatusInternalServerError)
+	randomSleepMs, err = RandInteger(minMs, maxMs)
+	if err != nil {
+		logger.Debugf("Invalid timeout ms values")
+		http.Error(w, "Invalid sleepms input", http.StatusInternalServerError)
+		return
+	}
+	randomMessageLength, err = RandInteger(minML, maxML)
+	if err != nil {
+		logger.Debugf("Invalid message length values")
+		http.Error(w, "Invalid messagelength input", http.StatusInternalServerError)
 		return
 	}
 
-	randomMessage = RandStringRunes(messageLength)
+	randomMessage = RandStringRunes(randomMessageLength)
 
 	logger.Debugf("Sleeping for %d ms", randomSleepMs)
 	time.Sleep(time.Duration(randomSleepMs) * time.Millisecond)
 	w.Header().Add("Content-Type", "application/json")
-	if messageLength > 0 {
-		logger.Debugf("Replying with a random message length of %d", messageLength)
+	if randomMessageLength > 0 {
+		logger.Debugf("Replying with a random message length of %d", randomMessageLength)
 		fmt.Fprintf(w, "{ \"msg\": \"%s\" }\n", randomMessage)
 	} else {
 		fmt.Fprintf(w, "{ \"msg\": \"Slept for %d milliseconds\" }\n", randomSleepMs)
@@ -178,6 +196,8 @@ func main() {
 		}
 	}
 
+	initRandom()
+
 	if len(bootWaitEnv) > 0 {
 		bootWait, err := strconv.Atoi(bootWaitEnv)
 		if err != nil {
@@ -197,7 +217,7 @@ func main() {
 	r.HandleFunc("/print/stdout", printToStdout).Methods("POST")
 	r.HandleFunc("/mirror", mirror).Methods("GET", "POST")
 	r.HandleFunc("/httpResponseCode/{code}", httpResponseCode).Methods("GET", "POST")
-	r.HandleFunc("/sleepms/max/{maxms}/min/{minms}/messageLength/{messageLength}", sleepMsMessageLength).Methods("GET", "POST")
+	r.HandleFunc("/sleepms/max/{maxms}/min/{minms}/messagelength/max/{maxML}/min/{minML}", sleepMsMessageLength).Methods("GET", "POST")
 
 	port := serverPort
 	srv := &http.Server{
