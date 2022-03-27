@@ -5,7 +5,7 @@
 webpuppet is a simple http daemon which behavior can be controlled by http requests.
 
 webpuppet was mainly developed to help me debugging [kubernetes termination lifecycle](https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-terminating-with-grace) but it can also be used to:
-* Inspect HTTP Headers and Body received by the backend
+* Inspect HTTP Headers and Body received by webpuppet.
 * Test forward and reverse proxy behavior.
 
 ### Available endpoints
