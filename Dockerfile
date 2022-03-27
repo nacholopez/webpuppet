@@ -1,11 +1,10 @@
-FROM golang:1.13.1
-COPY src/ /go/src/
-WORKDIR  /go
-RUN go get webpuppet
-RUN go install webpuppet
+FROM golang:1.18.0-alpine3.14 AS build
+WORKDIR /a
+COPY go.mod go.sum webpuppet.go ./
+RUN go build
 
-FROM ubuntu:bionic
-RUN adduser --system --quiet --group webpuppet
-COPY --from=0 /go/bin/webpuppet /
+FROM alpine:3.14
+RUN adduser -D webpuppet
+COPY --from=build /a/webpuppet /webpuppet
 USER webpuppet
 CMD ["/webpuppet"]
