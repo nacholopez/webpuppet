@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "postUpdateOptions": ["gomodTidy"],
+  "packageRules": [
+    {
+      "description": "Keep the go.mod go directive moving with the toolchain",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["golang"],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Update the Go version in go.mod and the golang build image together",
+      "matchPackageNames": ["go", "golang"],
+      "groupName": "Go toolchain"
+    }
+  ]
+}

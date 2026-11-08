@@ -1,7 +1,7 @@
-FROM golang:1.18.0-alpine3.14 AS build
+FROM golang:1.18.0-alpine AS build
 WORKDIR /a
 COPY go.mod go.sum webpuppet.go ./
-RUN go build
+RUN CGO_ENABLED=0 go build -trimpath
 
 FROM alpine:3.14
 RUN adduser -D webpuppet
