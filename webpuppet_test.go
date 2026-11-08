@@ -190,6 +190,12 @@ func TestHTTPResponseCode(t *testing.T) {
 			if rec.Code != tc.wantCode {
 				t.Fatalf("code = %d, want %d", rec.Code, tc.wantCode)
 			}
+			if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
+				t.Errorf("Content-Type = %q, want application/json", ct)
+			}
+			if tc.wantCode == http.StatusBadRequest && rec.Body.String() != "{ \"error\": \"invalid code\" }\n" {
+				t.Errorf("body = %q", rec.Body.String())
+			}
 		})
 	}
 }

@@ -175,11 +175,14 @@ func httpResponseCode(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	code, err = strconv.Atoi(vars["code"])
 
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil || code < 100 || code > 599 {
 		logger.Debugf("Invalid code")
-		http.Error(w, "{ \"error\": \"invalid code\" }", http.StatusBadRequest)
+		// http.Error would override the Content-Type with text/plain.
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "{ \"error\": \"invalid code\" }\n")
 		return
 	}
 	w.WriteHeader(code)
