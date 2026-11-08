@@ -2,6 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
   "postUpdateOptions": ["gomodTidy"],
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "description": "Keep the go.mod go directive moving with the toolchain",
@@ -10,9 +11,15 @@
       "rangeStrategy": "bump"
     },
     {
-      "description": "Update the Go version in go.mod and the golang build image together",
+      "description": "Automerge non-major updates once CI passes",
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Update the Go version in go.mod and the golang build image together; review manually",
       "matchPackageNames": ["go", "golang"],
-      "groupName": "Go toolchain"
+      "groupName": "Go toolchain",
+      "automerge": false
     }
   ]
 }
