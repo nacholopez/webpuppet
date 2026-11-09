@@ -4,5 +4,6 @@ go 1.27.3
 
 require (
 	github.com/gorilla/mux v1.8.1
-	github.com/juju/loggo v0.0.0-20210728185423-eebad3a902c4
+	github.com/juju/loggo v1.0.0
+	github.com/juju/loggo/v2 v2.2.0
 )
